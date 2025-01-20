@@ -21,7 +21,7 @@ pub fn main() !void {
 
     // Try to get info about a specific file
     std.debug.print("\nGetting file info for 'file':\n", .{});
-    explorer.getFileInfo(current_dir) catch |err| {
+    explorer.getFileInfo("src/main.zig") catch |err| {
         std.debug.print("Error getting file info: {}\n", .{err});
     };
 }
