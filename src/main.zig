@@ -8,6 +8,7 @@ pub fn main() !void {
     const allocator = gpa.allocator();
 
     // Get current directory as starting point
+
     var buf: [std.fs.max_path_bytes]u8 = undefined;
     const current_dir = try std.os.getcwd(&buf);
 

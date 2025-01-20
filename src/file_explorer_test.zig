@@ -23,13 +23,13 @@ test "FileExplorer basic functionality" {
     try explorer.listDirectory();
 
     // Test directory navigation
-    // try explorer.changeDirectory("test_dir");
-    // const expected_path = try std.fs.path.join(testing.allocator, &[_][]const u8{ tmp_path, "test_dir" });
-    // defer testing.allocator.free(expected_path);
-    // try testing.expectEqualStrings(expected_path, explorer.current_path);
+    try explorer.changeDirectory("test_dir");
+    const expected_path = try std.fs.path.join(testing.allocator, &[_][]const u8{ tmp_path, "test_dir" });
+    defer testing.allocator.free(expected_path);
+    try testing.expectEqualStrings(expected_path, explorer.current_path);
 
     // Test file info
-    //  try explorer.changeDirectory("..");
+    try explorer.changeDirectory("../");
     try explorer.getFileInfo("test_file.txt");
 }
 
@@ -43,7 +43,7 @@ test "FileExplorer error handling" {
     defer testing.allocator.free(old_path);
 
     // Verify error is returned and path remains unchanged
-    //try testing.expectError(error.FileNotFound, explorer.changeDirectory("non_existent_dir"));
+    // try testing.expectError(error.FileNotFound, explorer.changeDirectory("non_existent_dir"));
     try testing.expectEqualStrings(old_path, explorer.current_path);
 
     // Test invalid file info request

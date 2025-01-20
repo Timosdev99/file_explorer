@@ -19,6 +19,7 @@ pub const FileExplorer = struct {
         var dir = try std.fs.openDirAbsolute(self.current_path, .{ .iterate = true });
         defer dir.close();
 
+        // List name in dir
         var iter = dir.iterate();
         while (try iter.next()) |entry| {
             switch (entry.kind) {
@@ -30,33 +31,44 @@ pub const FileExplorer = struct {
         }
     }
 
-    // pub fn changeDirectory(self: *FileExplorer, new_path: []const u8) !void {
-    //     const new_absolute_path = if (std.fs.path.isAbsolute(new_path))
-    //         try self.allocator.dupe(u8, new_path)
-    //     else
-    //         try std.fs.path.join(self.allocator, &[_][]const u8{ self.current_path, new_path });
+    pub fn changeDirectory(self: *FileExplorer, new_path: []const u8) !void {
+        // Determine the new absolute path
+        const new_absolute_path = if (std.fs.path.isAbsolute(new_path))
+            try self.allocator.dupe(u8, new_path)
+        else blk: {
+            const joined_path = try std.fs.path.join(self.allocator, &[_][]const u8{ self.current_path, new_path });
+            defer self.allocator.free(joined_path);
+            break :blk try self.allocator.dupe(u8, joined_path);
+        };
 
-    //     // Use errdefer to free the new path if anything fails after this point
-    //     errdefer self.allocator.free(new_absolute_path);
+        // Free allocated memory on exit (error or not)
+        errdefer self.allocator.free(new_absolute_path);
 
-    //     // Try to open the directory to verify it exists
-    //     if (std.fs.openDirAbsolute(new_absolute_path, .{})) |dir| {
-    //         defer dir.close();
-    //         // Only free the old path after we're sure the new path is valid
-    //         self.allocator.free(self.current_path);
-    //         self.current_path = new_absolute_path;
-    //     } else |err| {
-    //         return err;
-    //     }
-    // }
+        // Attempt to open the directory at the new absolute path
+        var open_dir = try std.fs.openDirAbsolute(new_absolute_path, .{ .iterate = false });
+
+        // Close the directory once validated
+        open_dir.close();
+
+        // Free the previous current_path and update to the new path
+        self.allocator.free(self.current_path);
+        self.current_path = new_absolute_path;
+        //Show current path
+        std.debug.print("Current path: .{s}\n", .{self.current_path});
+    }
 
     pub fn getFileInfo(self: *FileExplorer, filename: []const u8) !void {
+        // Get filename
         const file_path = try std.fs.path.join(self.allocator, &[_][]const u8{ self.current_path, filename });
+        // Freee memory allocated to path
         defer self.allocator.free(file_path);
 
+        // Open file
         const file = try std.fs.openFileAbsolute(file_path, .{});
+        // Close file
         defer file.close();
 
+        // Get file metadata
         const stat = try file.stat();
         std.debug.print("File: {s}\nSize: {d} bytes\nModified: {}\n", .{
             filename,
